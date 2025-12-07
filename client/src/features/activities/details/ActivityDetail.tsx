@@ -1,30 +1,27 @@
 import { Button, Card, CardActions, CardContent, CardMedia, Typography } from "@mui/material"
+import { Link, useParams } from "react-router";
 import { useActivities } from "../../../lib/hooks/useActivities";
 
-type Props = {
-    selectedActivity: Activity;
-    cancelSelectActivity?: () => void;
-    openForm: (id: string) => void;
-}
+export default function ActivityDetail() {
+  const { id } = useParams();
+  const { activity, isLoadingActivity } = useActivities(id);
 
-export default function ActivityDetail({selectedActivity, cancelSelectActivity, openForm}: Props) {
-  const { activities } = useActivities();
-  const activity = activities?.find(a => a.id === selectedActivity.id);
+  if (isLoadingActivity) return <Typography>Loading...</Typography>
 
-  if(!activity) return <Typography>Loading...</Typography>
-  
+  if (!activity) return <Typography>Activity not found</Typography>
+
   return (
     <Card>
-        <CardMedia component="img" src={`/images/categoryImages/${activity.category}.jpg`} />
-        <CardContent>
-            <Typography variant="h5">{activity.title}</Typography>
-            <Typography variant="subtitle1">{activity.date}</Typography>
-            <Typography variant="body1">{activity.description}</Typography>
-        </CardContent>
-        <CardActions>
-            <Button color="primary" onClick={() => openForm(activity.id)}>Edit</Button>
-            <Button color="inherit" onClick={cancelSelectActivity}>Cancel</Button>
-        </CardActions>
+      <CardMedia component="img" src={`/images/categoryImages/${activity.category}.jpg`} />
+      <CardContent>
+        <Typography variant="h5">{activity.title}</Typography>
+        <Typography variant="subtitle1">{activity.date}</Typography>
+        <Typography variant="body1">{activity.description}</Typography>
+      </CardContent>
+      <CardActions>
+        <Button component={Link} to={`/edit-activity/${activity.id}`} color="primary">Edit</Button>
+        <Button component={Link} to={`/activities`} color="inherit">Cancel</Button>
+      </CardActions>
     </Card>
   )
 }
