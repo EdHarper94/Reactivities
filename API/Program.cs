@@ -1,3 +1,5 @@
+using Application.Activities.Queries;
+using Application.Core;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
 
@@ -14,6 +16,11 @@ builder.Services.AddDbContext<AppDBContext>(opt =>
     opt.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 builder.Services.AddCors();
+builder.Services.AddMediatR(x => 
+    x.RegisterServicesFromAssemblyContaining<GetActivityList>());
+builder.Services.AddAutoMapper(x => 
+    x.LicenseKey = builder.Configuration["AutoMapper:LicenseKey"],
+    typeof(MappingProfiles).Assembly);
 
 var app = builder.Build();
 
