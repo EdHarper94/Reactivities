@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import agent from "../api/agent";
+import { useLocation } from "react-router";
 
 const HOOK_KEY = 'activities';
 
 export const useActivities = (id?: string) => {
 	const queryClient = useQueryClient();
+	const location = useLocation();
 	const invalidateActivities = async() => {
 		await queryClient.invalidateQueries({ queryKey: [HOOK_KEY] });
 	}
@@ -14,7 +16,8 @@ export const useActivities = (id?: string) => {
 		queryFn: async () => {
 			const response = await agent.get<Activity[]>(`/${HOOK_KEY}`);
 			return response.data;
-		}
+		},
+		enabled: !id && location.pathname === '/activities'
 	});
 
 	const { data: activity, isLoading: isLoadingActivity} = useQuery({
