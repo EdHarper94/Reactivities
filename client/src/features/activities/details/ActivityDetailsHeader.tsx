@@ -11,7 +11,7 @@ export default function ActivityDetailsHeader({activity}: Props) {
     const isHost = true;
     const isGoing = true;
     const loading = false;
-
+    console.log(activity);
     return (
         <Card sx={{ position: 'relative', mb: 2, backgroundColor: 'transparent', overflow: 'hidden' }}>
         {isCancelled && (
@@ -64,7 +64,7 @@ export default function ActivityDetailsHeader({activity}: Props) {
                             variant="contained"
                             color="primary"
                             component={Link}
-                            to={`/manage/activityId`}
+                            to={`/manage/${activity.id}`}
                             disabled={isCancelled}
                         >
                             Manage Event
