@@ -2,6 +2,7 @@ using Application.Activities.Commands;
 using Application.Activities.DTOs;
 using Application.Activities.Queries;
 using Domain;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -12,7 +13,6 @@ public class ActivitiesController : BaseAPIController
     public async Task<ActionResult<List<Activity>>> GetActivities()
         => await Mediator.Send(new GetActivityList.Query());
    
-
     [HttpGet("{id}")]
     public async Task<ActionResult<Activity>> GetActivityDetails(string id)
         => HandleResult(await Mediator.Send(new GetActivityDetails.Query { Id = id}));
