@@ -37,4 +37,15 @@ public class ProfilesController : BaseAPIController
     [HttpPut]
     public async Task<IActionResult> EditProfile(EditProfileDTO profile)
         => HandleResult(await Mediator.Send(new EditProfile.Command { EditProfileDTO = profile}));
+
+    
+    [HttpPost("{userId}/follow")]
+    public async Task<IActionResult> Follow(string userId) 
+        => HandleResult(await Mediator.Send(new FollowToggle.Command { TargetUserId = userId }));
+
+
+    [HttpGet("{userId}/follow-list")]
+    public async Task<IActionResult> GetFollowings(string userId, string predicate)
+        => HandleResult(await Mediator.Send(new GetFollowings.Query {UserId = userId, Predicate = predicate}));
+
 }

@@ -9,6 +9,7 @@ namespace Application.Core
     {
         public MappingProfiles()
         {
+            string? currentUserId = null;
             CreateMap<Activity, Activity>();
             CreateMap<CreateActivityDTO, Activity>();
             CreateMap<EditActivityDTO, Activity>();
@@ -19,8 +20,14 @@ namespace Application.Core
                 .ForMember(d => d.DisplayName, o => o.MapFrom(s => s.User.DisplayName))
                 .ForMember(d => d.Bio, o => o.MapFrom(s => s.User.Bio))
                 .ForMember(d => d.ImageUrl, o => o.MapFrom(s => s.User.ImageUrl))
-                .ForMember(d => d.Id, o => o.MapFrom(s => s.User.Id));
-            CreateMap<User, UserProfileDTO>();
+                .ForMember(d => d.Id, o => o.MapFrom(s => s.User.Id))
+                .ForMember(d => d.FollowersCount, o => o.MapFrom(s => s.User.Followers.Count))
+                .ForMember(d => d.FollowingCount, o => o.MapFrom(s => s.User.Followings.Count))
+                .ForMember(d => d.Following, o => o.MapFrom(s => s.User.Followings.Any(x => x.Observer.Id == currentUserId)));
+            CreateMap<User, UserProfileDTO>()
+                .ForMember(d => d.FollowersCount, o => o.MapFrom(s => s.Followers.Count))
+                .ForMember(d => d.FollowingCount, o => o.MapFrom(s => s.Followings.Count))
+                .ForMember(d => d.Following, o => o.MapFrom(s => s.Followings.Any(x => x.Observer.Id == currentUserId)));
             CreateMap<EditProfileDTO, User>();
             CreateMap<Comment, CommentDto>()
             .ForMember(d => d.DisplayName, o => o.MapFrom(s => s.User.DisplayName))
