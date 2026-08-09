@@ -22,13 +22,15 @@ export const useActivities = (id?: string) => {
 			const response = await agent.get<Activity[]>(`/${HOOK_KEY}`);
 			return response.data;
 		},
-		enabled: !id && location.pathname === '/activities' && !!currentUser,
+		enabled: !id && location.pathname === '/' + HOOK_KEY && !!currentUser,
 		select: data => {
 			return data.map(activity => {
+				const host = activity.attendees.find(x => x.id === activity.hostId);
 				return {
 					...activity,
 					isHost: currentUser?.id === activity.hostId,
-					isGoing: activity.attendees.some(x => x.id === currentUser?.id)
+					isGoing: activity.attendees.some(x => x.id === currentUser?.id),
+					hostImageUrl: host?.imageUrl
 				}
 			})
 		}
@@ -43,10 +45,12 @@ export const useActivities = (id?: string) => {
 		},
 		enabled: !!id && !!currentUser,
 		select: data => {
+			const host = data.attendees.find(x => x.id === data.hostId);
 			return {
 				...data,
 				isHost: currentUser?.id === data.hostId,
-				isGoing: data.attendees.some(x => x.id === currentUser?.id)
+				isGoing: data.attendees.some(x => x.id === currentUser?.id),
+				hostImageUrl: host?.imageUrl
 			}
 		}
 	});
@@ -80,14 +84,14 @@ export const useActivities = (id?: string) => {
 
 	const updateAttendance = useMutation({
 		mutationFn: async (id: string) => {
-			await agent.post(`/activities/${id}/attend`)
+			await agent.post(`/${HOOK_KEY}/${id}/attend`)
 		},
 		onMutate: async (activityId: string) => {
-			await queryClient.cancelQueries({queryKey: ['activities', activityId]});
+			await queryClient.cancelQueries({queryKey: [HOOK_KEY, activityId]});
 
-			const prevActivity = queryClient.getQueryData<Activity>(['activities', activityId]);
+			const prevActivity = queryClient.getQueryData<Activity>([HOOK_KEY, activityId]);
 
-			queryClient.setQueryData<Activity>(['activities', activityId], oldActivity => {
+			queryClient.setQueryData<Activity>([HOOK_KEY, activityId], oldActivity => {
 				if (!oldActivity || !currentUser) {
 					return oldActivity
 				}
@@ -113,7 +117,7 @@ export const useActivities = (id?: string) => {
 		},
 		onError: (error, activityId, context) => {
 			if(context?.prevActivity) {
-				queryClient.setQueryData(['activities', activityId], context.prevActivity)
+				queryClient.setQueryData([HOOK_KEY, activityId], context.prevActivity)
 			}
 		}
 	})

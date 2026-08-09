@@ -20,4 +20,14 @@ public class UserAccessor(IHttpContextAccessor httpContextAccessor, AppDBContext
         return httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? throw new Exception("No user found");
     }
+
+    public async Task<User> GetUserWithPhotosAsync()
+    {
+        var userId = GetUserId();
+
+        return await dbContext.Users
+            .Include(x => x.Photos)
+            .FirstOrDefaultAsync(x => x.Id == userId)
+                ?? throw new UnauthorizedAccessException("Cannot find user in the DB");
+    }
 }
