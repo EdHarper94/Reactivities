@@ -1,12 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import agent from "../api/agent";
 import { useLocation } from "react-router";
 import { useAccount } from "./useAccount";
-import type { Activity } from "../types";
+import { PagedList, type Activity } from "../types";
+import { useStore } from "./useStore";
 
 const HOOK_KEY = 'activities';
 
 export const useActivities = (id?: string) => {
+	const { activityStore: {filter, startDate} } = useStore();
 	const queryClient = useQueryClient();
 	const location = useLocation();
 	const {currentUser} = useAccount();
@@ -15,25 +17,40 @@ export const useActivities = (id?: string) => {
 		await queryClient.invalidateQueries({ queryKey: [HOOK_KEY] });
 	}
 
-	// Activity Liust
-	const { data: activities, isLoading } = useQuery({
-		queryKey: [HOOK_KEY],
-		queryFn: async () => {
-			const response = await agent.get<Activity[]>(`/${HOOK_KEY}`);
+	// Activity List
+	const { data: activitiesGroup, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } = useInfiniteQuery<PagedList<Activity, string>>({
+		queryKey: [HOOK_KEY, filter, startDate],
+		queryFn: async ({pageParam = null}) => {
+			const response = await agent.get<PagedList<Activity, string>>(`/${HOOK_KEY}`, {
+				params: {
+					cursor: pageParam,
+					pageSize: 3,
+					filter,
+					startDate
+				}
+			});
 			return response.data;
 		},
+		staleTime: 1000 * 60 * 5,
+		placeholderData: keepPreviousData,
+		initialPageParam: null,
+		getNextPageParam: (lastPage) => lastPage.nextCursor,
 		enabled: !id && location.pathname === '/' + HOOK_KEY && !!currentUser,
-		select: data => {
-			return data.map(activity => {
-				const host = activity.attendees.find(x => x.id === activity.hostId);
-				return {
-					...activity,
-					isHost: currentUser?.id === activity.hostId,
-					isGoing: activity.attendees.some(x => x.id === currentUser?.id),
-					hostImageUrl: host?.imageUrl
-				}
-			})
-		}
+		select: data => ({
+			...data,
+			pages: data.pages.map((page) => ({
+				...page,
+				items: page.items.map(activity => {
+					const host = activity.attendees.find(x => x.id === activity.hostId);
+					return {
+						...activity,
+						isHost: currentUser?.id === activity.hostId,
+						isGoing: activity.attendees.some(x => x.id === currentUser?.id),
+						hostImageUrl: host?.imageUrl
+					}
+				})
+			}))
+		})
 	});
 
 	// Activity Detail
@@ -122,5 +139,17 @@ export const useActivities = (id?: string) => {
 		}
 	})
 
-	return { activities, isLoading, activity, isLoadingActivity, updateActivity, createActivity, deleteActivity, updateAttendance };
+	return { 
+		activitiesGroup, 
+		isLoading, 
+		isFetchingNextPage,
+		fetchNextPage,
+		hasNextPage,
+		activity, 
+		isLoadingActivity, 
+		updateActivity, 
+		createActivity, 
+		deleteActivity, 
+		updateAttendance 
+	};
 }

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import agent from "../api/agent";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { Photo, Profile, User } from "../types";
 import { useAccount } from "./useAccount";
 import type { EditProfileSchema } from "../schemas/editProfileSchema";
@@ -11,6 +11,7 @@ const USER_QK = ['user'];
 export const useProfile = (id?: string, predicate?: string) => {
     const queryClient = useQueryClient();
     const {currentUser} = useAccount();
+    const [filter, setFilter] = useState<string | null>(null);
 
     const isCurrentUser = useMemo(() => {
       return id === queryClient.getQueryData<User>(USER_QK)?.id
@@ -164,6 +165,19 @@ export const useProfile = (id?: string, predicate?: string) => {
         }
     })
 
+     const {data: userActivities, isLoading: loadingUserActivities} = useQuery({
+        queryKey: ['user-activities', filter],
+        queryFn: async () => {
+            const response = await agent.get<Activity[]>(`/profiles/${id}/activities`, {
+                params: {
+                    filter
+                }
+            });
+            return response.data
+        },
+        enabled: !!id && !!filter
+    })
+
     return {
         profile,
         loadingProfile,
@@ -176,6 +190,10 @@ export const useProfile = (id?: string, predicate?: string) => {
         updateProfile,
         updateFollowing,
         followings,
-        loadingFollowings
+        loadingFollowings,
+         userActivities,
+        loadingUserActivities,
+        setFilter,
+        filter
     }
 }
